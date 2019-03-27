@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.work_order_system.mapper.EmployeeMapper">
+	<!-- <select id="queryUsers" parameterType="com.model.User" resultType="com.model.User" useCache="false">
+		SELECT * FROM member WHERE id=#{id}
+	</select> -->
+	<!-- 创建工单 -->
+	<insert id="createWorkOrder" parameterType="com.work_order_system.model.Work_order">
+		insert into work_order(`title`, `desc`, `emp_id`, `time`, `priority`, `state`, `group_id`, `now_emp_id`) 
+			values(#{title,jdbcType=VARCHAR}, #{desc,jdbcType=VARCHAR}, #{accepEmployeeId,jdbcType=INTEGER}, #{time,jdbcType=TIMESTAMP}, #{priority, jdbcType=TINYINT}, 0, 2, 0);
+	</insert>
+	<!-- 工单附属保障人信息 -->
+	<insert id="insertOrderInfor" parameterType="com.work_order_system.model.Work_order_informate">
+		insert into work_order_informate(`user_name`, `user_phone`, `user_email`, `order_id`) 
+			values(#{user_name, jdbcType=VARCHAR}, #{user_phone, jdbcType=CHAR}, #{user_email, jdbcType=VARCHAR}, #{orderId, jdbcType=INTEGER});
+	</insert>
+	<!-- 获取work_order最大的一个id -->
+	<select id="getLastInsertId" resultType="INTEGER">
+		select max(id) from work_order;
+	</select>
+	<!-- 获取work_order_item最大的一个id -->
+	<select id="getLastInsertIdOfItem" resultType="INTEGER">
+		select max(id) from work_order_item;
+	</select>
+	<!-- 创建指定工单的处理项 领取的时候创建 -->
+	<insert id="createWorkOrderItem" parameterType="com.work_order_system.model.Work_order_item">
+		insert into work_order_item(`start_time`, `order_id`, `employee_id`) 
+			values(#{start_time,jdbcType=TIMESTAMP}, #{order_id,jdbcType=INTEGER}, #{employee_id, jdbcType=INTEGER})
+	</insert>
+	<!-- 工单处理提交的时候修改 -->
+	<update id="updateWorkOrderItem" parameterType="com.work_order_system.model.Work_order_item">
+		update work_order_item set operate = #{operate, jdbcType=TINYINT}, `end_time` = #{end_time, jdbcType=TIMESTAMP}, `advise` = #{advise,jdbcType=VARCHAR} 
+			where id = #{id}
+	</update>
+	<select id="selectMaxIdByOrderId" parameterType="INTEGER" resultType="INTEGER">
+		select max(id) from work_order_item where order_id = #{id}
+	</select>
+	<!-- 
+	查询所有员工
+	<resultMap id="employees" type="com.work_order_system.model.Employee">
+		<id column="id" property="id"></id>
+		<result property="name" column="name"/>
+		<result property="chinese" column="chinese"/>
+		<result property="english" column="english"/>
+		<result property="math" column="math"/>
+	</resultMap>
+	<select id="getEmployee" resultMap="employees" useCache="false">
+		SELECT * FROM employee
+	</select> -->
+	
+	<update id="dealWorkOrderOfComm" parameterType="com.work_order_system.model.Work_order">
+		update work_order set `group_id` = #{group_id, jdbcType=INTEGER}, `now_emp_id` = #{current_employee_id, jdbcType=INTEGER}
+			<if test="state!=0">, state = #{state, jdbcType=TINYINT} </if>
+			where id = #{id};
+	</update>
+	
+	<!-- 获取工单轨迹信息 -->
+	<resultMap id="orderTrack" type="com.work_order_system.model.OrderTrack">
+		<id column="order_id" property="order_id"></id>
+		<result property="part_name" column="part_name"/>
+		<result property="operate" column="operate"/>
+		<result property="g_name" column="g_name"/>
+		<result property="name" column="name"/>
+		<result property="start_time" column="start_time"/>
+		<result property="end_time" column="end_time"/>
+		<result property="advise" column="advise"/>
+	</resultMap>
+	<select id="selectWorkOrderTrack" resultMap="orderTrack" useCache="false" parameterType="INTEGER">
+		select a.order_id, c.part_name, a.operate, d.g_name, b.`name`, a.start_time, a.end_time, a.advise 
+			from work_order_item a, employee_informate b, `group` c, group_ d 
+			where b.employee_id = a.employee_id AND b.group_id = d.id AND d.g_id = c.id AND a.order_id = #{id}  ORDER BY a.start_time
+	</select>
+	<resultMap id="orderDetail" type="com.work_order_system.model.OrderDetail">
+		<id column="id" property="id"></id>
+		<result property="title" column="title"/>
+		<result property="name" column="name"/>
+		<result property="time" column="time"/>
+		<result property="priority" column="priority"/>
+		<result property="desc" column="desc"/>
+		<result property="user_name" column="user_name"/>
+		<result property="user_phone" column="user_phone"/>
+		<result property="user_emails" column="user_emails"/>
+		<result property="group_id" column="group_id"/>
+	</resultMap>
+	<select id="selectWorkOrderDetail" resultMap="orderDetail" useCache="false" parameterType="INTEGER">
+		select a.id, a.title, c.`name`, a.group_id, c.group_id as emp_group_id, a.time, a.priority, a.state, a.`desc`, b.`user_name`, b.user_phone, b.user_email 
+			from work_order a, work_order_informate b, employee_informate c
+			where c.employee_id = a.emp_id AND a.id = b.order_id AND a.id = #{orderId}
+	</select>
+	<select id="selectGroupIdById" parameterType="INTEGER" resultType="INTEGER">
+		select group_id from employee_informate 
+			where employee_id = #{id}
+	</select>
+	<select id="selectPartName" parameterType="com.work_order_system.model.Work_order" resultType="com.work_order_system.model.OparateModel">
+		select c.part_name, a.now_emp_id, a.state
+			from work_order a, group_ b, `group` c 
+			where a.group_id = b.id and b.g_id = c.id and a.group_id = #{group_id} and a.id = #{id}
+	</select>
+	
+	<resultMap id="workOrderList" type="com.work_order_system.model.Work_order_list">
+		<id property="id" column="id"></id>
+		<result property="name" column="name"/>
+		<result property="priority" column="priority"/>
+		<result property="title" column="title" />
+		<result property="time" column="time"/>
+	</resultMap>
+	<select id="receiveWorkOrder" parameterType="com.work_order_system.model.Work_order" resultMap="workOrderList">
+		select a.id, a.priority, a.title, a.time, b.`name`,a.state
+			from work_order a, employee_informate b
+			where a.emp_id = b.employee_id
+			<if test="group_id!=null"> AND a.group_id = #{group_id} </if>
+			<if test="current_employee_id!=null"> AND a.now_emp_id = #{current_employee_id} </if>
+			<if test="state!=0"> AND a.state = #{state} </if>
+			<if test="priority!=0"> AND a.priority = #{priority}</if>
+			<if test="title!=null"> AND a.title LIKE #{title}</if>	
+			<if test="id!=null"> AND a.id = #{id}</if>
+	</select>
+	
+	<!-- 已提交的在途工单 或 已提交的归档工单 -->
+	<!-- 此处有个特殊的地方，就是c.employee_id对应current_employee_id 这在数据库中是不对应的，
+	但是在此处为了方便则借用了current_employee_id字段传递值给c.employee_id -->
+	<select id="commiteWorkOrder" parameterType="com.work_order_system.model.Work_order" resultMap="workOrderList">
+		select DISTINCT a.id, a.priority, a.title, a.time, c.`name`, a.state 
+			from work_order a, work_order_item b, employee_informate c 
+			where b.employee_id = c.employee_id AND a.id = b.order_id 
+			<if test="current_employee_id!=null"> AND c.employee_id = #{current_employee_id}</if>
+			<if test="state!=0"> AND a.state = #{state}</if>
+			<if test="priority!=0"> AND a.priority = #{priority}</if>
+			<if test="title!=null"> AND a.title LIKE #{title}</if>	
+			<if test="id!=null"> AND a.id = #{id}</if>
+	</select>
+	
+	<update id="takeWorkOrder" parameterType="com.work_order_system.model.Work_order">
+		update work_order set now_emp_id = 
+		<choose>
+         	<when test="current_employee_id != null">
+            	#{current_employee_id, jdbcType=INTEGER}
+        	</when>
+			<otherwise>
+            	emp_id
+			</otherwise>
+       	</choose>
+		 where id = #{id}
+	</update>
+	
+	<select id="selectWorkOrderCountOfGroup" parameterType="com.work_order_system.model.Work_order" resultType="INTEGER">
+		select count(id)
+			from work_order
+			where group_id = #{group_id} AND now_emp_id = #{current_employee_id} AND state = 1;
+	</select>
+	<select id="myWorkOrderCountOfCommed" parameterType="INTEGER" resultType="INTEGER">
+		select count(id) from work_order where now_emp_id = #{id}
+	</select>
+	
+	<select id="selectWorkOrderCountOfCommed" parameterType="INTEGER" resultType="INTEGER">
+		select count(DISTINCT order_id) 
+			from work_order_item 
+			where employee_id = #{id} 
+	</select>
+	
+	<select id="selectEmployee" parameterType="STRING" resultType="com.work_order_system.model.Employee">
+		select `user`, `pass`
+			from employee 
+			where `user` = #{user};
+	</select>
+	<select id="selectEmployeeById" parameterType="INTEGER" resultType="com.work_order_system.model.Employee">
+		select `user`, `pass`
+			from employee 
+			where `id` = #{id};
+	</select>
+	
+	<select id="selectEmployeeInfor" parameterType="STRING" resultType="com.work_order_system.model.Employee_informate">
+		select b.`name`, b.group_id, b.employee_id
+			from employee a, employee_informate b
+			where a.id = b.employee_id AND a.`user` = #{user};
+	</select>
+	
+	<select id="queryWorkOrderByPage" resultMap="workOrderList">
+		select * from work_order
+	</select>
+	
+	<!-- <resultMap id="group" type="com.work_order_system.model.Group">
+		<id column="id" property="id"></id>
+		<result property="part_name" column="part_name"/>
+	</resultMap>
+	<select id="selectGroup" resultMap="group">
+		select * from `group`
+	</select>
+	<resultMap id="group_" type="com.work_order_system.model.Group_">
+		<id column="id" property="id"></id>
+		<result property="g_name" column="part_name"/>
+	</resultMap>
+	<select id="selectGroup_" parameterType="Integer" resultMap="group_">
+		select * from group_ where id = #{id}
+	</select> -->
+	<resultMap id="group" type="com.work_order_system.model.Group">
+		<id column="id" property="id"></id>
+		<result property="part_name" column="part_name"/>
+		<collection property="group_"
+					javaType="LIST"
+					select="com.work_order_system.mapper.EmployeeMapper.selectGroup_"
+					column="id">
+			<id column="id" property="id"></id>
+			<result property="g_name" column="g_name"/>
+		</collection>
+	</resultMap>
+	
+	<select id="selectGroup" resultMap="group">
+		select * from `group`
+	</select>
+	<resultMap id="group_" type="com.work_order_system.model.Group_">
+		<id column="id" property="id"></id>
+		<result property="g_name" column="g_name"/>
+	</resultMap>
+	<select id="selectGroup_" parameterType="Integer" resultMap="group_">
+		select * from group_ where g_id = #{id}
+	</select>
+	<resultMap id="work_order_" type="com.work_order_system.model.Work_order">
+		<id column="id" property="id"></id>
+		<result property="accepEmployeeId" column="emp_id"/>
+	</resultMap>
+	<select id="selectNeedAssignmentOrder" parameterType="INTEGER" resultMap="work_order_">
+		select id, emp_id from work_order where state=1 and now_emp_id=0 and group_id=#{id}
+	</select>
+	<resultMap id="infor" type="com.work_order_system.model.Employee_informate_ext">
+		
+	</resultMap>
+	<select id="selectEmployeeInforOfAssignment" parameterType="INTEGER" resultMap="infor">
+		select employee_id from employee_informate where group_id=#{id}
+	</select>
+	<update id="runAssignmentOrderOfAccept" parameterType="INTEGER">
+		update work_order 
+			set now_emp_id=emp_id where id=#{id, jdbcType=INTEGER}
+	</update>
+	<update id="runAssignmentOrder" parameterType="com.work_order_system.model.Employee_informate_ext">
+		update work_order 
+			set now_emp_id=#{employee_id, jdbcType=INTEGER} where id=#{order_id, jdbcType=INTEGER}
+	</update>
+	
+</mapper>

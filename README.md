@@ -13,6 +13,7 @@
 * [程序流程图](#程序流程图)  
 * [ER设计](#ER设计)  
 * [页面分析](#页面分析)  
+* [系统效果图](#系统效果图)   
 
     
 # 引言  
@@ -262,6 +263,38 @@
 	登录页  
 		EmployeeControl login  
 	
+# 系统效果图  
+效果图只展示部分首要  
+`登录页`  
 
-[gongdanfenpailiuchengtu]:工单分派流程图.png
-[xitongliuchegntu]:系统流程图.png
+![][xiaoguotu1]  
+****
+`主页`  
+
+![][xiaoguotu2]  
+****
+`创建工单`  
+
+![][xiaoguotu3]  
+****
+`工单管理`  
+
+![][xiaoguotu4]  
+****
+`工单详细之工单跟踪`  
+
+![][xiaoguotu5]  
+****
+`工单提交`  
+
+![][xiaoguotu6]  
+****
+
+[gongdanfenpailiuchengtu]:resource-img/工单分派流程图.png
+[xitongliuchegntu]:resource-img/系统流程图.png
+[xiaoguotu1]:resource-img/效果图1.png
+[xiaoguotu2]:resource-img/效果图2.png
+[xiaoguotu3]:resource-img/效果图3.png
+[xiaoguotu4]:resource-img/效果图4.png
+[xiaoguotu5]:resource-img/效果图5.png
+[xiaoguotu6]:resource-img/效果图6.png

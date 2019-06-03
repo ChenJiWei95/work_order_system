@@ -505,7 +505,6 @@
 	function clickToMain(){
 		link.local("toMain.do");
 	}
-	
 	</script>
  </body>
 </html>

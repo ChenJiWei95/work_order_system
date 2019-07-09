@@ -10,12 +10,17 @@
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
 		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
 		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+	
+	<!-- 加载配置文件 -->
+	<context:property-placeholder location="classpath*:/config/config.properties"
+		ignore-resource-not-found="true" ignore-unresolvable="true" />
+	
 	<!-- 数据源：DriverManagerDataSource -->
 	<bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
-		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
-		<property name="url" value="jdbc:mysql://localhost:3306/work_order_manage_system" />
-		<property name="username" value="root"/>
-		<property name="password" value="123456"/>
+		<property name="driverClassName" value="${mybatis.jdbc.driver}" />
+		<property name="url" value="${mybatis.jdbc.jdbcUrl}"/>
+		<property name="username" value="${mybatis.jdbc.username}"/>
+		<property name="password" value="${mybatis.jdbc.password}"/>
 	</bean>
 	
 	<!-- 
@@ -30,7 +35,7 @@
 	<!-- 3.mybatis自动扫描加载Sql映射文件、接口：MapperScannerConfigurer sqlSessionFactory
 	basePackage：指定sql映射文件、接口所在的包（自动扫描） -->
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-		<property name="basePackage" value="com.work_order_system.mapper" />
+		<property name="basePackage" value="com.mapper" />
 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
 	</bean>
 	
@@ -44,4 +49,12 @@
 		在Spring配置文件之中，还需要加入以下配置通知Spring容器，并且对注解@Transactional的Bean处理
 	-->
 	<tx:annotation-driven transaction-manager="txManager"/>
+	
+	<!-- 支持国际化 解析器 -->
+	<!-- 默认语言 -->
+	<bean id="localeResolver"
+		class="org.springframework.web.servlet.i18n.FixedLocaleResolver">
+		<property name="defaultLocale" value="${locale}" />
+	</bean>
+	
 </beans>
